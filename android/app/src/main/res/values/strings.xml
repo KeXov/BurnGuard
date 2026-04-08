@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">BurnGuard</string>
+    <string name="accessibility_service_description">BurnGuard防烧屏服务需要无障碍权限来显示顶层遮罩，保护您的OLED屏幕免受烧屏影响。该服务不会收集或上传任何个人信息。</string>
+</resources>
