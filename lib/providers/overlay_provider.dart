@@ -116,7 +116,7 @@ class OverlayManagerNotifier extends StateNotifier<OverlayManagerState> {
       overlays: overlays,
       templates: templates,
       activeOverlayIds: activeOverlayIds,
-      globalEnabled: globalEnabled && !hasAccessibilityIssue,
+      globalEnabled: globalEnabled,
     );
 
     Logger.info(
@@ -124,15 +124,13 @@ class OverlayManagerNotifier extends StateNotifier<OverlayManagerState> {
       _tag,
     );
 
-    if (hasAccessibilityIssue && globalEnabled) {
+    if (hasAccessibilityIssue) {
       Logger.info(
-        'Accessibility service needs restart, stopping all overlays',
+        'Accessibility service needs restart, stopping legacy overlays',
         _tag,
       );
       await _stopAllOverlays();
-      await StorageService.saveGlobalEnabled(false);
-      await StorageService.saveActiveOverlayIds({});
-      state = state.copyWith(globalEnabled: false, activeOverlayIds: {});
+      state = state.copyWith(activeOverlayIds: {});
     } else if (globalEnabled && hasPermission) {
       await _syncAndRestoreOverlays(activeOverlayIds);
     }
