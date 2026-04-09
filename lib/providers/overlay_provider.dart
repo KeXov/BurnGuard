@@ -91,8 +91,8 @@ class OverlayManagerNotifier extends StateNotifier<OverlayManagerState> {
         await OverlayService.isAccessibilityEnabledInSettings();
     final overlays = await StorageService.loadOverlays();
     final templates = await StorageService.loadTemplates();
-    final activeOverlayIds = await StorageService.loadActiveOverlayIds();
-    final globalEnabled = await StorageService.loadGlobalEnabled();
+    final savedActiveOverlayIds = await StorageService.loadActiveOverlayIds();
+    final savedGlobalEnabled = await StorageService.loadGlobalEnabled();
 
     final hasPermission = hasPermissionsResult.isSuccess
         ? hasPermissionsResult.data!
@@ -109,6 +109,29 @@ class OverlayManagerNotifier extends StateNotifier<OverlayManagerState> {
     final hasAccessibilityIssue =
         isAccessibilityInSettings && !isAccessibilityRunning;
 
+    Set<String> activeOverlayIds = savedActiveOverlayIds;
+    bool globalEnabled = savedGlobalEnabled;
+
+    if (!hasAccessibilityIssue && hasPermission) {
+      await OverlayService.ensureOverlaysRestored();
+      await Future.delayed(const Duration(milliseconds: 100));
+
+      final runningConfigsResult =
+          await OverlayService.getRunningOverlayConfigs();
+      if (runningConfigsResult.isSuccess) {
+        final runningConfigs = runningConfigsResult.data!;
+        final runningIds = runningConfigs.map((c) => c['id'] as String).toSet();
+
+        if (runningIds.isNotEmpty) {
+          activeOverlayIds = runningIds;
+          globalEnabled = true;
+        } else if (savedActiveOverlayIds.isNotEmpty) {
+          globalEnabled = savedGlobalEnabled;
+        }
+        Logger.info('Running overlays detected: ${runningIds.length}', _tag);
+      }
+    }
+
     state = state.copyWith(
       hasPermission: hasPermission,
       hasAccessibilityPermission: isAccessibilityRunning,
@@ -120,14 +143,12 @@ class OverlayManagerNotifier extends StateNotifier<OverlayManagerState> {
     );
 
     Logger.info(
-      'Initialized: ${overlays.length} overlays, accessibilityRunning=$isAccessibilityRunning, inSettings=$isAccessibilityInSettings, hasIssue=$hasAccessibilityIssue',
+      'Initialized: ${overlays.length} overlays, globalEnabled=$globalEnabled, activeCount=${activeOverlayIds.length}, accessibilityRunning=$isAccessibilityRunning, hasIssue=$hasAccessibilityIssue',
       _tag,
     );
 
     if (hasAccessibilityIssue) {
       Logger.info('Accessibility service needs restart', _tag);
-    } else if (globalEnabled && hasPermission) {
-      await _syncAndRestoreOverlays(activeOverlayIds);
     }
   }
 
