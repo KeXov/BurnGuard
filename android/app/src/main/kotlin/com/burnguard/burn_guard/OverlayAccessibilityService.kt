@@ -212,7 +212,6 @@ class OverlayAccessibilityService : AccessibilityService() {
             }
             
             saveOverlayConfigs()
-            updateGlobalState()
             
             android.util.Log.d("BurnGuard", "Accessibility overlay started: ${config.id}")
             return true
@@ -241,8 +240,6 @@ class OverlayAccessibilityService : AccessibilityService() {
             if (updateSaved) {
                 saveOverlayConfigs()
             }
-            
-            updateGlobalState()
             
             android.util.Log.d("BurnGuard", "Accessibility overlay stopped: $overlayId, remaining: ${overlayInstances.size}")
             return true
@@ -323,11 +320,6 @@ class OverlayAccessibilityService : AccessibilityService() {
     
     fun getRunningOverlayConfigs(): List<OverlayConfig> {
         return overlayInstances.values.map { it.config }
-    }
-    
-    private fun updateGlobalState() {
-        OverlayGlobalState.isEnabled = overlayInstances.isNotEmpty()
-        OverlayGlobalState.saveEnabledState(applicationContext)
     }
     
     private fun saveOverlayConfigs() {

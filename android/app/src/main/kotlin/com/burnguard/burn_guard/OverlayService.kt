@@ -197,7 +197,13 @@ class OverlayService : Service() {
             ACTION_STOP -> {
                 val overlayId = intent.getStringExtra("id") ?: ""
                 stopOverlay(overlayId)
-                if (overlayInstances.isEmpty()) {
+                val accessibilityService = OverlayAccessibilityService.getInstance()
+                val hasRunningOverlays = if (accessibilityService != null) {
+                    accessibilityService.getRunningOverlayIds().isNotEmpty()
+                } else {
+                    overlayInstances.isNotEmpty()
+                }
+                if (!hasRunningOverlays) {
                     removeFullscreenOverlay()
                     stopForeground(STOP_FOREGROUND_REMOVE)
                     stopSelf()
