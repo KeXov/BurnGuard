@@ -106,6 +106,9 @@ class OverlayManagerNotifier extends StateNotifier<OverlayManagerState> {
         ? isAccessibilityInSettingsResult.data!
         : false;
 
+    final hasAccessibilityIssue =
+        isAccessibilityInSettings && !isAccessibilityRunning;
+
     state = state.copyWith(
       hasPermission: hasPermission,
       hasAccessibilityPermission: isAccessibilityRunning,
@@ -113,15 +116,24 @@ class OverlayManagerNotifier extends StateNotifier<OverlayManagerState> {
       overlays: overlays,
       templates: templates,
       activeOverlayIds: activeOverlayIds,
-      globalEnabled: globalEnabled,
+      globalEnabled: globalEnabled && !hasAccessibilityIssue,
     );
 
     Logger.info(
-      'Initialized: ${overlays.length} overlays, accessibilityRunning=$isAccessibilityRunning, inSettings=$isAccessibilityInSettings',
+      'Initialized: ${overlays.length} overlays, accessibilityRunning=$isAccessibilityRunning, inSettings=$isAccessibilityInSettings, hasIssue=$hasAccessibilityIssue',
       _tag,
     );
 
-    if (globalEnabled && hasPermission) {
+    if (hasAccessibilityIssue && globalEnabled) {
+      Logger.info(
+        'Accessibility service needs restart, stopping all overlays',
+        _tag,
+      );
+      await _stopAllOverlays();
+      await StorageService.saveGlobalEnabled(false);
+      await StorageService.saveActiveOverlayIds({});
+      state = state.copyWith(globalEnabled: false, activeOverlayIds: {});
+    } else if (globalEnabled && hasPermission) {
       await _syncAndRestoreOverlays(activeOverlayIds);
     }
   }

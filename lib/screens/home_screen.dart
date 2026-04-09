@@ -264,6 +264,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   ) {
     final activeCount = state.globalEnabled ? state.activeOverlayIds.length : 0;
     final totalCount = state.overlays.length;
+    final hasAccessibilityIssue =
+        state.accessibilityEnabledInSettings &&
+        !state.hasAccessibilityPermission;
 
     return Card(
       child: Padding(
@@ -283,16 +286,26 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       height: 12,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: state.globalEnabled ? Colors.green : Colors.grey,
+                        color: hasAccessibilityIssue
+                            ? Colors.orange
+                            : (state.globalEnabled
+                                  ? Colors.green
+                                  : Colors.grey),
                       ),
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      state.globalEnabled ? '运行中' : '已停止',
+                      hasAccessibilityIssue
+                          ? '需重启无障碍'
+                          : (state.globalEnabled ? '运行中' : '已停止'),
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: state.globalEnabled ? Colors.green : Colors.grey,
+                        color: hasAccessibilityIssue
+                            ? Colors.orange
+                            : (state.globalEnabled
+                                  ? Colors.green
+                                  : Colors.grey),
                       ),
                     ),
                   ],
@@ -324,15 +337,30 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     manager.OverlayManagerState state,
     manager.OverlayManagerNotifier notifier,
   ) {
+    final hasAccessibilityIssue =
+        state.accessibilityEnabledInSettings &&
+        !state.hasAccessibilityPermission;
+
+    String subtitle;
+    if (hasAccessibilityIssue) {
+      subtitle = '请先重启无障碍服务';
+    } else if (state.globalEnabled) {
+      subtitle = '所有遮罩已启动';
+    } else {
+      subtitle = '所有遮罩已停止';
+    }
+
     return Card(
       child: SwitchListTile(
         title: const Text(
           '全局开关',
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
-        subtitle: Text(state.globalEnabled ? '所有遮罩已启动' : '所有遮罩已停止'),
+        subtitle: Text(subtitle),
         value: state.globalEnabled,
-        onChanged: state.hasPermission ? (_) => notifier.toggleGlobal() : null,
+        onChanged: state.hasPermission && !hasAccessibilityIssue
+            ? (_) => notifier.toggleGlobal()
+            : null,
         activeTrackColor: Theme.of(context).colorScheme.primary,
       ),
     );
