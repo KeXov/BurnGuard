@@ -340,6 +340,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final hasAccessibilityIssue =
         state.accessibilityEnabledInSettings &&
         !state.hasAccessibilityPermission;
+    final isEnabled = state.hasPermission && !hasAccessibilityIssue;
 
     String subtitle;
     if (hasAccessibilityIssue) {
@@ -352,16 +353,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
     return Card(
       child: SwitchListTile(
-        title: const Text(
+        title: Text(
           '全局开关',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: isEnabled ? null : Theme.of(context).disabledColor,
+          ),
         ),
         subtitle: Text(subtitle),
         value: state.globalEnabled,
-        onChanged: state.hasPermission && !hasAccessibilityIssue
-            ? (_) => notifier.toggleGlobal()
-            : null,
-        activeTrackColor: Theme.of(context).colorScheme.primary,
+        onChanged: isEnabled ? (_) => notifier.toggleGlobal() : null,
       ),
     );
   }
