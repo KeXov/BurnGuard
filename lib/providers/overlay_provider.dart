@@ -125,12 +125,7 @@ class OverlayManagerNotifier extends StateNotifier<OverlayManagerState> {
     );
 
     if (hasAccessibilityIssue) {
-      Logger.info(
-        'Accessibility service needs restart, stopping legacy overlays',
-        _tag,
-      );
-      await _stopAllOverlays();
-      state = state.copyWith(activeOverlayIds: {});
+      Logger.info('Accessibility service needs restart', _tag);
     } else if (globalEnabled && hasPermission) {
       await _syncAndRestoreOverlays(activeOverlayIds);
     }

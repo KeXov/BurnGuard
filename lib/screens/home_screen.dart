@@ -371,6 +371,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     manager.OverlayManagerState state,
     manager.OverlayManagerNotifier notifier,
   ) {
+    final hasAccessibilityIssue =
+        state.accessibilityEnabledInSettings &&
+        !state.hasAccessibilityPermission;
+
     if (state.overlays.isEmpty) {
       return Center(
         child: Column(
@@ -422,7 +426,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   )
                 : Switch(
                     value: isActive,
-                    onChanged: state.globalEnabled
+                    onChanged: state.globalEnabled && !hasAccessibilityIssue
                         ? (_) => notifier.toggleOverlay(overlay.id)
                         : null,
                   ),
